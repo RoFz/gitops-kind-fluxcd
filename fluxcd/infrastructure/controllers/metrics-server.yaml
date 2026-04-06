@@ -1,0 +1,50 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: metrics-server
+  namespace: kube-system
+spec:
+  interval: 5m
+  url: https://kubernetes-sigs.github.io/metrics-server
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: metrics-server
+  namespace: kube-system
+spec:
+  interval: 10m
+  timeout: 5m
+  chart:
+    spec:
+      chart: metrics-server
+      version: "*"
+      sourceRef:
+        kind: HelmRepository
+        name: metrics-server
+        namespace: kube-system
+      interval: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 10
+  values:
+    replicas: 1
+    args:
+      - --kubelet-preferred-address-types=InternalIP
+      - --kubelet-insecure-tls
+    service:
+      port: 443
+      labels:
+        kubernetes.io/cluster-service: "true"
+        kubernetes.io/name: "Metrics-server"
+    tls:
+      type: "cert-manager"
+    certManager:
+      existingIssuer:
+        enabled: true
+        kind: "ClusterIssuer"
+        name: "internal-ca"

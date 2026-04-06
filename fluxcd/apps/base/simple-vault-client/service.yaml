@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: simple-vault-client
+  name: simple-vault-client
+spec:
+  ports:
+    - name: web
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: simple-vault-client
+  type: ClusterIP

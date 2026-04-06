@@ -1,0 +1,18 @@
+---
+# This Secret must be created manually before Flux syncs this resource.
+# It contains your root/intermediate CA certificate and private key.
+#
+# Create with:
+#   kubectl create secret tls internal-ca \
+#     --cert=ca.crt \
+#     --key=ca.key \
+#     --namespace cert-manager
+#
+# NEVER commit the actual certificate or private key to this repository.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: internal-ca
+spec:
+  ca:
+    secretName: internal-ca

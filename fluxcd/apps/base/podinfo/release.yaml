@@ -1,0 +1,35 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: podinfo
+  namespace: podinfo
+spec:
+  releaseName: podinfo
+  chart:
+    spec:
+      chart: podinfo
+      sourceRef:
+        kind: HelmRepository
+        name: podinfo
+  interval: 50m
+  install:
+    remediation:
+      retries: 3
+  values:
+    redis:
+      enabled: true
+      repository: public.ecr.aws/docker/library/redis
+      tag: 7.0.6
+    ingress:
+      enabled: true
+      className: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+        cert-manager.io/cluster-issuer: internal-ca
+      hosts:
+        - host: podinfo.k8s.example.internal
+      tls:
+        - hosts:
+            - podinfo.k8s.example.internal
+          secretName: podinfo-tls

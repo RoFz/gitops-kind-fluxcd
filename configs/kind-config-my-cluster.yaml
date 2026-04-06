@@ -1,0 +1,32 @@
+# kind create cluster --name my-cluster --config kind-config-my-cluster.yaml
+---
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+      - |
+        kind: ClusterConfiguration
+        controllerManager:
+          extraArgs:
+            bind-address: 0.0.0.0
+        scheduler:
+          extraArgs:
+            bind-address: 0.0.0.0
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 30443
+        hostPort: 443
+        protocol: TCP
+  - role: worker
+  - role: worker
+networking:
+  podSubnet: "10.244.0.0/16"
+  serviceSubnet: "10.96.0.0/12"

@@ -1,0 +1,77 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: traefik-default-certificate
+  namespace: traefik
+spec:
+  secretName: traefik-default-certificate
+  dnsNames:
+    - "k8s.example.internal"
+    - "*.k8s.example.internal"
+  issuerRef:
+    name: internal-ca
+    kind: ClusterIssuer
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSStore
+metadata:
+  name: default
+  namespace: traefik
+spec:
+  defaultCertificate:
+    secretName: traefik-default-certificate
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: traefik
+spec:
+  minVersion: VersionTLS12
+  curvePreferences:
+    - "X25519"
+    - "CurveP256"
+    - "CurveP384"
+  cipherSuites:
+    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: secure-headers-all
+  namespace: traefik
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "GET"
+      - "OPTIONS"
+      - "PUT"
+      - "POST"
+      - "PATCH"
+    accessControlAllowOriginList:
+      - https://k8s.example.internal
+    accessControlAllowHeaders:
+      - "*"
+    accessControlMaxAge: 100
+    addVaryHeader: true
+    frameDeny: true
+    browserXssFilter: true
+    stsSeconds: 31536000
+    stsIncludeSubdomains: true
+    stsPreload: true
+    contentTypeNosniff: true
+    customFrameOptionsValue: "SAMEORIGIN"
+    referrerPolicy: origin-when-cross-origin
+    customResponseHeaders:
+      $$wsep: ""
+      Host-Header: ""
+      K-Proxy-Request: ""
+      Powered-By: ""
+      Server: ""
+      X-Powered-By: ""

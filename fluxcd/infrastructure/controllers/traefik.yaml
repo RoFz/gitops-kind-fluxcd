@@ -1,0 +1,70 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: traefik
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: traefik
+  namespace: traefik
+spec:
+  interval: 5m
+  url: https://traefik.github.io/charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: traefik
+  namespace: traefik
+spec:
+  interval: 10m
+  timeout: 5m
+  chart:
+    spec:
+      chart: traefik
+      version: "33.x"
+      sourceRef:
+        kind: HelmRepository
+        name: traefik
+        namespace: traefik
+      interval: 5m
+  releaseName: traefik
+  install:
+    remediation:
+      retries: 3
+    # https://github.com/fluxcd/flux2/issues/5052
+    disableWait: true
+  upgrade:
+    # https://github.com/fluxcd/flux2/issues/5052
+    disableWait: true
+    remediation:
+      retries: 10
+  rollback:
+    # https://github.com/fluxcd/flux2/issues/5052
+    disableWait: true
+  values:
+    service:
+      type: NodePort
+    globalArguments:
+      - "--serversTransport.insecureSkipVerify=true"
+    logs:
+      general:
+        level: "INFO"
+      access:
+        enabled: true
+    ports:
+      web:
+        asDefault: true
+        nodePort: 30080
+      websecure:
+        nodePort: 30443
+        middlewares:
+          - traefik-secure-headers-all@kubernetescrd
+    nodeSelector:
+      ingress-ready: "true"
+    tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
